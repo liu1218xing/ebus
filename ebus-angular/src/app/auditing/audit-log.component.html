@@ -1,0 +1,212 @@
+<!-- <page-header [title]="l('AuditLogs')" [desc]="l('AuditLogsHeaderInfo')"></page-header> -->
+<page-header [title]="l('AuditLogs')"></page-header>
+
+<nz-card [nzBordered]="false">
+
+    <div class="mb-md">
+        <!-- 模糊搜索框 -->
+        <nz-row nzGutter="8">
+            <nz-col nzSm="24">
+
+                <nz-form-item>
+                    <nz-form-label [nzSm]="4" [nzXs]="24" nzRequired>{{l("DateRange")}}</nz-form-label>
+                    <nz-form-control [nzSm]="8" [nzXs]="24">
+                        <nz-range-picker [(ngModel)]="dateRange" (ngModelChange)="onChange($event)"></nz-range-picker>
+
+                    </nz-form-control>
+                    <nz-form-label [nzSm]="4" [nzXs]="24" nzRequired>{{l("UserName")}}</nz-form-label>
+                    <nz-form-control [nzSm]="8" [nzXs]="24">
+                        <input type="text" nz-input [(ngModel)]="usernameEntityChange" name="usernameEntityChange"
+                            [placeholder]="l('UserName')">
+                        <!-- <nz-range-picker [(ngModel)]="dateRange" (ngModelChange)="onChange($event)"></nz-range-picker> -->
+                        <!-- <nz-range-picker [(ngModel)]="dateRange" formControlName="rangePicker" (ngModelChange)="onChange($event)"></nz-range-picker> -->
+                        <!-- <nz-range-picker [(ngModel)]="dateRange" (ngModelChange)="onChange($event)" nzShowTime></nz-range-picker>  -->
+                    </nz-form-control>
+                </nz-form-item>
+
+                <nz-form-item>
+                    <nz-form-control>
+
+                        <nz-input-group nzSearch [nzSuffix]="suffixSearchButton">
+
+                            <input type="text" nz-input [(ngModel)]="filterText" (keyup.enter)="refresh()" name="filterText"
+                                [placeholder]="l('SearchWithThreeDot')">
+                            <ng-template #suffixSearchButton>
+                                <button nz-button nzType="primary" nzSearch type="submit" (click)="refresh()">
+                                    <i class="anticon anticon-search"></i>
+                                </button>
+                            </ng-template>
+                        </nz-input-group>
+                    </nz-form-control>
+                </nz-form-item>
+            </nz-col>
+        </nz-row>
+    </div>
+    <!-- 操作常规按钮部分 如： 添加、批量删除、导出Excel表  -->
+    <!-- <div class="mb-md">
+         
+        <nz-row nzGutter="8">
+            <nz-col nzMd="20" nzSm="12" class="btn-gutter">
+
+
+                <button nz-button [nzType]="'primary'" *ngIf="isGranted('Pages.AuditLog.Create')" (click)="createOrEdit()">
+                    <i class="anticon anticon-plus"></i>
+                    <span>
+                        {{l("Create")}}
+                    </span>
+                </button>
+                <button nz-button [nzType]="'danger'" *ngIf="isGranted('Pages.AuditLog.BatchDelete')" (click)="batchDelete()">
+                    <i class="anticon anticon-delete"></i>
+                    <span>
+                        {{l("BatchDelete")}}
+                    </span>
+                </button>
+                <button nz-button nzType="default" *ngIf="isGranted('Pages.AuditLog.ExportToExcel')" (click)="exportToExcel()">
+                    <i class="anticon anticon-file-excel"></i>
+                    <span>
+                        {{l("ExportToExcel")}}
+                    </span>
+                </button>
+            </nz-col>
+        </nz-row>
+    </div> -->
+
+    <!-- 复选框提示的内容数据部分 -->
+    <!-- <div class="my-md">
+        <nz-alert [nzType]="'info'" [nzShowIcon]="true" [nzMessage]="message">
+            <ng-template #message>
+                <span [innerHTML]="l('GridSelectedXItemsTips',selectedDataItems.length)"></span>
+                <a (click)="restCheckStatus(dataList)" class="ml-md">
+                    {{l('ClearEmpty')}}
+                </a>
+                <nz-divider nzType="vertical"></nz-divider>
+                <a (click)="refreshGoFirstPage()">
+                    {{l('Refresh')}}
+                </a>
+            </ng-template>
+        </nz-alert>
+    </div> -->
+
+    <!-- 实体的表格内容 -->
+    <nz-row class="my-md">
+        <nz-table #ajaxTable [nzData]="dataList" [nzTotal]="totalItems" [(nzPageIndex)]="pageNumber" [(nzPageSize)]="pageSize"
+            [nzLoading]="isTableLoading" (nzPageIndexChange)="pageNumberChange()" (nzPageSizeChange)="refresh()"
+            [nzShowSizeChanger]="true" [nzShowQuickJumper]="true" [nzNoResult]="noDataTemplate" [nzShowTotal]="showTotalTemplate"
+            [nzFrontPagination]="false" [nzScroll]="{x:'1300px'}">
+            <!-- 暂无数据组件 -->
+            <ng-template #noDataTemplate>
+                <no-data></no-data>
+            </ng-template>
+            <!-- 分页信息显示 当前 1 页/共 3 页，共 5 条/显示 1-2 条 -->
+            <ng-template #showTotalTemplate let-total let-range="range">
+                {{l('GridFooterDisplayText',pageNumber,totalPages,total,range[0],range[1])}}
+            </ng-template>
+            <!-- 表头 -->
+            <thead (nzSortChange)="gridSort($event)">
+                <tr>
+                    <!-- <th nzShowCheckbox [(nzChecked)]="allChecked" [nzDisabled]="allCheckboxDisabled" [nzIndeterminate]="checkboxIndeterminate"
+                        (nzCheckedChange)="checkAll($event)"></th> -->
+                    <th nz-th nzWidth="150px" nzSortKey="ExecutionTime">
+                        <span>{{l('Time')}}</span>
+                    </th>
+                    <th nz-th nzWidth="150px" nzSortKey="UserName">
+                        <span>{{l('UserName')}}</span>
+                    </th>
+                    <th nz-th nzWidth="250px" nzSortKey="ServiceName">
+                        <span>{{l('Service')}}</span>
+                    </th>
+                    <th nzWidth="20px" class="text-center">
+                        <span>{{l('Actions')}}</span>
+                    </th>
+
+                    <th nz-th nzWidth="150px" nzSortKey="ExecutionDuration">
+                        <span>{{l('Duration')}}</span>
+                    </th>
+                    <th nz-th nzWidth="150px" nzSortKey="ClientIpAddress">
+                        <span>{{l('IpAddress')}}</span>
+                    </th>
+                    <th nz-th nzWidth="150px" nzSortKey="ClientName">
+                        <span>{{l('Client')}}</span>
+                    </th>
+                    <th nz-th nzWidth="150px" nzSortKey="BrowserInfo">
+                        <span>{{l('Browser')}}</span>
+                    </th>
+
+
+                    <!-- <th>{{l("Actions")}}</th> -->
+                </tr>
+            </thead>
+            <!-- 表格内容 -->
+            <tbody>
+                <tr *ngFor="let item of ajaxTable.data">
+                    <!-- 全选框 -->
+                    <!-- <td nzShowCheckbox [(nzChecked)]="item.checked" (nzCheckedChange)="refreshCheckStatus(dataList)"></td> -->
+                    <td class="text-center">
+                        <ellipsis lines="1">
+                            <span nz-tooltip [nzTitle]="item.executionTime  |_date">
+                                {{item.executionTime | _date:'YYYY-MM-DD HH:mm:ss'}}
+                            </span>
+                        </ellipsis>
+                    </td>
+
+
+                    <td nz-td>
+                        <ellipsis lines="1">
+                            <span nz-tooltip [nzTitle]="item.userName">
+                                {{item.userName}}
+                            </span>
+                        </ellipsis>
+                    </td>
+                    <td nz-td>
+                        <ellipsis lines="1">
+                            <span nz-tooltip [nzTitle]="item.serviceName">
+                                {{item.serviceName}}
+                            </span>
+                        </ellipsis>
+                    </td>
+                    <td nz-td>
+                        <ellipsis lines="1">
+                            <span nz-tooltip [nzTitle]="item.methodName">
+                                {{item.methodName}}
+                            </span>
+                        </ellipsis>
+                    </td>
+                    <td nz-td>
+                        <ellipsis lines="1">
+                            <span nz-tooltip [nzTitle]="item.executionDuration">
+                                {{item.executionDuration}}
+                            </span>
+                        </ellipsis>
+                    </td>
+                    <td nz-td>
+                        <ellipsis lines="1">
+                            <span nz-tooltip [nzTitle]="item.clientIpAddress">
+                                {{item.clientIpAddress}}
+                            </span>
+                        </ellipsis>
+                    </td>
+                    <td nz-td>
+                        <ellipsis lines="1">
+                            <span nz-tooltip [nzTitle]="item.clientName">
+                                {{item.clientName}}
+                            </span>
+                        </ellipsis>
+                    </td>
+                    <td nz-td>
+                        <ellipsis lines="1">
+                            <span nz-tooltip [nzTitle]="item.browserInfo">
+                                {{item.browserInfo}}
+                            </span>
+                        </ellipsis>
+                    </td>
+
+
+
+
+
+                </tr>
+            </tbody>
+        </nz-table>
+
+    </nz-row>
+</nz-card>
